@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Wheel of Bars 🍸</title>
+<title>Куда идём пить?</title>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&display=swap');
@@ -17,6 +17,7 @@ body {
     justify-content: center;
     font-family: 'Montserrat', sans-serif;
     color: white;
+    overflow: hidden;
 }
 
 .app {
@@ -25,13 +26,13 @@ body {
 
 h1 {
     margin-bottom: 20px;
-    font-size: 32px;
+    font-size: 34px;
 }
 
 .wheel-wrapper {
     position: relative;
-    width: 320px;
-    height: 320px;
+    width: 460px;
+    height: 460px;
     margin: auto;
 }
 
@@ -42,36 +43,38 @@ canvas {
 }
 
 .pointer {
-   position: absolute;
-    top: -14px;
+    position: absolute;
+    top: -18px;
     left: 50%;
-    transform: translateX(-50%) rotate(180deg);
+    transform: translateX(-50%);
     width: 0;
     height: 0;
-    border-left: 14px solid transparent;
-    border-right: 14px solid transparent;
-    border-bottom: 26px solid #ff3d3d;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-top: 32px solid #ff3d3d;
+    filter: drop-shadow(0 0 6px rgba(255,0,0,0.7));
 }
 
 button {
     margin-top: 30px;
-    padding: 14px 40px;
-    font-size: 18px;
-    font-weight: 700;
+    padding: 16px 46px;
+    font-size: 20px;
+    font-weight: 800;
     background: linear-gradient(135deg, #ff416c, #ff4b2b);
     border: none;
-    border-radius: 40px;
+    border-radius: 50px;
     color: white;
     cursor: pointer;
-    box-shadow: 0 10px 25px rgba(255,75,43,0.4);
+    box-shadow: 0 12px 30px rgba(255,75,43,0.45);
 }
 
-button:active {
-    transform: scale(0.96);
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .result {
-    margin-top: 25px;
+    margin-top: 26px;
     font-size: 24px;
     opacity: 0;
     transition: 0.4s;
@@ -89,7 +92,7 @@ button:active {
 
     <div class="wheel-wrapper">
         <div class="pointer"></div>
-        <canvas id="wheel" width="320" height="320"></canvas>
+        <canvas id="wheel" width="460" height="460"></canvas>
     </div>
 
     <button id="spin">КРУТИТЬ</button>
@@ -98,7 +101,8 @@ button:active {
 </div>
 
 <script>
-const bars = [
+// ================= НАСТРОЙКИ =================
+let bars = [
     "Пивной сад",
     "Чили(нергрони)",
     "Корвин",
@@ -110,6 +114,8 @@ const bars = [
     "У Вадика на хате"
 ];
 
+// ============================================
+
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
 const spinBtn = document.getElementById("spin");
@@ -118,13 +124,32 @@ const result = document.getElementById("result");
 const size = canvas.width;
 const center = size / 2;
 const radius = center - 10;
-const slice = (2 * Math.PI) / bars.length;
 
 let rotation = 0;
 let spinning = false;
+let round = 1;
+let lastTick = -1;
 
+let seed = Math.floor(Math.random() * 1e9);
+
+const tickSound = new Audio(
+  "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
+);
+tickSound.volume = 0.4;
+
+// ====== RANDOM SEED ======
+function seededRandom() {
+    const x = Math.sin(seed++) * 10000;
+    return x - Math.floor(x);
+}
+
+// ====== ОТРИСОВКА ======
 function drawWheel() {
     ctx.clearRect(0, 0, size, size);
+
+    if (bars.length === 0) return;
+
+    const slice = (2 * Math.PI) / bars.length;
 
     bars.forEach((bar, i) => {
         const angle = rotation + i * slice;
@@ -132,7 +157,8 @@ function drawWheel() {
         ctx.beginPath();
         ctx.moveTo(center, center);
         ctx.arc(center, center, radius, angle, angle + slice);
-        ctx.fillStyle = i % 2 === 0 ? "#ff5f6d" : "#ffc371";
+
+        ctx.fillStyle = `hsl(${(i * 360) / bars.length}, 85%, 60%)`;
         ctx.fill();
 
         ctx.save();
@@ -140,58 +166,156 @@ function drawWheel() {
         ctx.rotate(angle + slice / 2);
         ctx.textAlign = "right";
         ctx.fillStyle = "#000";
-        ctx.font = "bold 14px Montserrat";
-        ctx.fillText(bar, radius - 15, 5);
+        ctx.font = "bold 15px Montserrat";
+        ctx.fillText(bar, radius - 18, 6);
         ctx.restore();
     });
 }
 
 drawWheel();
 
+// ====== ВРАЩЕНИЕ ======
 spinBtn.addEventListener("click", () => {
-    if (spinning) return;
+    if (spinning || bars.length <= 1) return;
+
     spinning = true;
+    spinBtn.disabled = true;
     result.classList.remove("show");
 
-    const spins = Math.random() * 4 + 5;
-    const finalRotation = rotation + spins * 2 * Math.PI;
+    const slice = (2 * Math.PI) / bars.length;
+    const loserIndex = Math.floor(seededRandom() * bars.length);
+    const spins = 6;
+
+    const targetAngle =
+        (2 * Math.PI) -
+        (loserIndex * slice + slice / 2) -
+        Math.PI / 2;
+
+    const finalRotation =
+        spins * 2 * Math.PI + targetAngle;
 
     const start = performance.now();
-    const duration = 4000;
+    const duration = 5000;
 
     function animate(time) {
         const progress = Math.min((time - start) / duration, 1);
-        const ease = 1 - Math.pow(1 - progress, 3);
-        rotation = rotation + (finalRotation - rotation) * ease;
+        const ease = 1 - Math.pow(1 - progress, 5);
+
+        rotation = ease * finalRotation;
         drawWheel();
+
+        const currentTick = Math.floor(
+            ((rotation % (2 * Math.PI)) + 2 * Math.PI) / slice
+        );
+
+        if (currentTick !== lastTick) {
+            tickSound.currentTime = 0;
+            tickSound.play();
+            lastTick = currentTick;
+        }
 
         if (progress < 1) {
             requestAnimationFrame(animate);
         } else {
             spinning = false;
-            showResult();
+            lastTick = -1;
+            showResult(loserIndex);
         }
     }
 
     requestAnimationFrame(animate);
 });
 
-function showResult() {
-    const index =
-        bars.length -
-        Math.floor(((rotation % (2 * Math.PI)) / (2 * Math.PI)) * bars.length) - 1;
+// ====== РЕЗУЛЬТАТ + ВЫБЫВАНИЕ ======
+function showResult(index) {
 
-    const winner = bars[(index + bars.length) % bars.length];
+    const eliminated = bars[index];
 
-    result.textContent = `🍾 Сегодня идём в: ${winner}`;
+    result.textContent =
+        bars.length > 1
+        ? `❌ Раунд ${round}: выбывает ${eliminated}`
+        : `🏆 ПОБЕДИТЕЛЬ: ${eliminated}`;
+
+    result.classList.add("show");
+
+    if (bars.length > 1) {
+
+        setTimeout(() => {
+
+            // удаляем выбывший бар
+            bars.splice(index, 1);
+
+            // ЕСЛИ ОСТАЛСЯ 1 — запускаем финальное вращение
+            if (bars.length === 1) {
+                finalSpin();
+                return;
+            }
+
+            round++;
+            rotation = 0;
+            spinBtn.disabled = false;
+            drawWheel();
+
+        }, 2000);
+
+    } else {
+        finalWinAnimation();
+    }
+}
+
+// ====== ФИНАЛЬНОЕ КРУТЕЙШЕЕ ВРАЩЕНИЕ ======
+function finalSpin() {
+
+    result.textContent = "🔥 ФИНАЛЬНОЕ КРУЧЕНИЕ!";
+    result.classList.add("show");
+
+    const slice = (2 * Math.PI) / bars.length;
+    const spins = 8;
+
+    const targetAngle =
+        (2 * Math.PI) -
+        (slice / 2) -
+        Math.PI / 2;
+
+    const finalRotation =
+        spins * 2 * Math.PI + targetAngle;
+
+    const start = performance.now();
+    const duration = 4000;
+
+    function animate(time) {
+
+        const progress = Math.min((time - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 4);
+
+        rotation = ease * finalRotation;
+        drawWheel();
+
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            finalWinAnimation();
+        }
+    }
+
+    requestAnimationFrame(animate);
+}
+
+
+// ====== ФИНАЛ ======
+function finalWinAnimation() {
+
+    result.textContent = `🏆 ПОБЕДИТЕЛЬ ВЕЧЕРА: ${bars[0]} 🍾`;
+    result.style.fontSize = "34px";
+    result.style.textShadow = "0 0 25px gold";
     result.classList.add("show");
 
     confetti();
 }
 
-// 🎉 CONFETTI
+// ====== CONFETTI ======
 function confetti() {
-    for (let i = 0; i < 80; i++) {
+    for (let i = 0; i < 120; i++) {
         const el = document.createElement("div");
         el.style.position = "fixed";
         el.style.left = Math.random() * 100 + "vw";
@@ -201,10 +325,10 @@ function confetti() {
         el.style.background = `hsl(${Math.random() * 360},100%,50%)`;
         el.style.borderRadius = "50%";
         el.style.zIndex = 9999;
-        el.style.animation = "fall 2.5s linear";
+        el.style.animation = "fall 3s linear";
 
         document.body.appendChild(el);
-        setTimeout(() => el.remove(), 2500);
+        setTimeout(() => el.remove(), 3000);
     }
 }
 
@@ -217,6 +341,7 @@ style.innerHTML = `
     }
 }`;
 document.head.appendChild(style);
+
 </script>
 </body>
 </html>
