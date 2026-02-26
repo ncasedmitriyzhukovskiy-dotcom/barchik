@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Wheel of Bars 🍸</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&display=swap');
+
+body {
+    margin: 0;
+    height: 100vh;
+    background: radial-gradient(circle at top, #1b1f3b, #090b17);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Montserrat', sans-serif;
+    color: white;
+}
+
+.app {
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 20px;
+    font-size: 32px;
+}
+
+.wheel-wrapper {
+    position: relative;
+    width: 320px;
+    height: 320px;
+    margin: auto;
+}
+
+canvas {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+}
+
+.pointer {
+   position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%) rotate(180deg);
+    width: 0;
+    height: 0;
+    border-left: 14px solid transparent;
+    border-right: 14px solid transparent;
+    border-bottom: 26px solid #ff3d3d;
+}
+
+button {
+    margin-top: 30px;
+    padding: 14px 40px;
+    font-size: 18px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    border: none;
+    border-radius: 40px;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(255,75,43,0.4);
+}
+
+button:active {
+    transform: scale(0.96);
+}
+
+.result {
+    margin-top: 25px;
+    font-size: 24px;
+    opacity: 0;
+    transition: 0.4s;
+}
+
+.result.show {
+    opacity: 1;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+    <h1>🍹 Куда идём пить?</h1>
+
+    <div class="wheel-wrapper">
+        <div class="pointer"></div>
+        <canvas id="wheel" width="320" height="320"></canvas>
+    </div>
+
+    <button id="spin">КРУТИТЬ</button>
+
+    <div class="result" id="result"></div>
+</div>
+
+<script>
+const bars = [
+    "Пивной сад",
+    "Чили(нергрони)",
+    "Корвин",
+    "Солтихорс",
+    "Качка",
+    "Гамбринус",
+    "У Димы на хате",
+    "У Игоря на хате",
+    "У Вадика на хате"
+];
+
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const spinBtn = document.getElementById("spin");
+const result = document.getElementById("result");
+
+const size = canvas.width;
+const center = size / 2;
+const radius = center - 10;
+const slice = (2 * Math.PI) / bars.length;
+
+let rotation = 0;
+let spinning = false;
+
+function drawWheel() {
+    ctx.clearRect(0, 0, size, size);
+
+    bars.forEach((bar, i) => {
+        const angle = rotation + i * slice;
+
+        ctx.beginPath();
+        ctx.moveTo(center, center);
+        ctx.arc(center, center, radius, angle, angle + slice);
+        ctx.fillStyle = i % 2 === 0 ? "#ff5f6d" : "#ffc371";
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(center, center);
+        ctx.rotate(angle + slice / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#000";
+        ctx.font = "bold 14px Montserrat";
+        ctx.fillText(bar, radius - 15, 5);
+        ctx.restore();
+    });
+}
+
+drawWheel();
+
+spinBtn.addEventListener("click", () => {
+    if (spinning) return;
+    spinning = true;
+    result.classList.remove("show");
+
+    const spins = Math.random() * 4 + 5;
+    const finalRotation = rotation + spins * 2 * Math.PI;
+
+    const start = performance.now();
+    const duration = 4000;
+
+    function animate(time) {
+        const progress = Math.min((time - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        rotation = rotation + (finalRotation - rotation) * ease;
+        drawWheel();
+
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            spinning = false;
+            showResult();
+        }
+    }
+
+    requestAnimationFrame(animate);
+});
+
+function showResult() {
+    const index =
+        bars.length -
+        Math.floor(((rotation % (2 * Math.PI)) / (2 * Math.PI)) * bars.length) - 1;
+
+    const winner = bars[(index + bars.length) % bars.length];
+
+    result.textContent = `🍾 Сегодня идём в: ${winner}`;
+    result.classList.add("show");
+
+    confetti();
+}
+
+// 🎉 CONFETTI
+function confetti() {
+    for (let i = 0; i < 80; i++) {
+        const el = document.createElement("div");
+        el.style.position = "fixed";
+        el.style.left = Math.random() * 100 + "vw";
+        el.style.top = "-10px";
+        el.style.width = "8px";
+        el.style.height = "8px";
+        el.style.background = `hsl(${Math.random() * 360},100%,50%)`;
+        el.style.borderRadius = "50%";
+        el.style.zIndex = 9999;
+        el.style.animation = "fall 2.5s linear";
+
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 2500);
+    }
+}
+
+const style = document.createElement("style");
+style.innerHTML = `
+@keyframes fall {
+    to {
+        transform: translateY(110vh) rotate(720deg);
+        opacity: 0;
+    }
+}`;
+document.head.appendChild(style);
+</script>
+</body>
+</html>
