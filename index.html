@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Куда идём пить?</title>
+<title>Куда идём по пивасику пидарасику?</title>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&display=swap');
@@ -88,14 +88,14 @@ button:disabled {
 
 <body>
 <div class="app">
-    <h1>🍹 Куда идём пить?</h1>
+    <h1>🍹 Куда идём по пивасику пидарасику?</h1>
 
     <div class="wheel-wrapper">
         <div class="pointer"></div>
         <canvas id="wheel" width="460" height="460"></canvas>
     </div>
 
-    <button id="spin">КРУТИТЬ</button>
+    <button id="spin">ХУЯРИТЬ</button>
 
     <div class="result" id="result"></div>
 </div>
@@ -233,8 +233,8 @@ function showResult(index) {
 
     result.textContent =
         bars.length > 1
-        ? `❌ Раунд ${round}: выбывает ${eliminated}`
-        : `🏆 ПОБЕДИТЕЛЬ: ${eliminated}`;
+        ? `❌ Раунд ${round}: идет нахуй: ${eliminated}`
+        : `🏆 ПОБЕДИТЕЛЬ АХУЕТЬ: ${eliminated}`;
 
     result.classList.add("show");
 
@@ -266,7 +266,7 @@ function showResult(index) {
 // ====== ФИНАЛЬНОЕ КРУТЕЙШЕЕ ВРАЩЕНИЕ ======
 function finalSpin() {
 
-    result.textContent = "🔥 ФИНАЛЬНОЕ КРУЧЕНИЕ!";
+    result.textContent = "🔥 ФИНАЛЬНОЕ ВРАЩЕНИЕ АХАХАХЭА!";
     result.classList.add("show");
 
     const slice = (2 * Math.PI) / bars.length;
@@ -305,7 +305,7 @@ function finalSpin() {
 // ====== ФИНАЛ ======
 function finalWinAnimation() {
 
-    result.textContent = `🏆 ПОБЕДИТЕЛЬ ВЕЧЕРА: ${bars[0]} 🍾`;
+    result.textContent = `🏆 БЛЯДСКИЙ ПОБЕДИТЕЛЬ ГОВНА: ${bars[0]} 🍾`;
     result.style.fontSize = "34px";
     result.style.textShadow = "0 0 25px gold";
     result.classList.add("show");
