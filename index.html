@@ -89,28 +89,11 @@ button:disabled {
     opacity: 1;
 }
 
-/* ======== МОБИЛКА ======== */
-
 @media (max-width: 768px) {
-
-    h1 {
-        font-size: 22px;
-    }
-
-    .wheel-wrapper {
-        width: 90vw;
-        height: 90vw;
-    }
-
-    button {
-        padding: 14px 28px;
-        font-size: 16px;
-    }
-
-    .result {
-        font-size: 18px;
-    }
-
+    h1 { font-size: 22px; }
+    .wheel-wrapper { width: 90vw; height: 90vw; }
+    button { padding: 14px 28px; font-size: 16px; }
+    .result { font-size: 18px; }
     .pointer {
         top: -14px;
         border-left: 14px solid transparent;
@@ -131,11 +114,11 @@ button:disabled {
     </div>
 
     <button id="spin">ХУЯРИТЬ</button>
-
     <div class="result" id="result"></div>
 </div>
 
 <script>
+
 // ================= НАСТРОЙКИ =================
 let bars = [
     "Пивной сад",
@@ -155,31 +138,11 @@ const ctx = canvas.getContext("2d");
 const spinBtn = document.getElementById("spin");
 const result = document.getElementById("result");
 
-let size;
-let center;
-let radius;
-
-function resizeCanvas() {
-    const wrapper = document.querySelector(".wheel-wrapper");
-    const rect = wrapper.getBoundingClientRect();
-
-    canvas.width = rect.width;
-    canvas.height = rect.height;
-
-    size = canvas.width;
-    center = size / 2;
-    radius = center - 10;
-
-    drawWheel();
-}
-
+let size, center, radius;
 let rotation = 0;
 let spinning = false;
 let round = 1;
 let lastTick = -1;
-
-window.addEventListener("resize", resizeCanvas);
-resizeCanvas();
 
 let seed = Math.floor(Math.random() * 1e9);
 
@@ -188,16 +151,39 @@ const tickSound = new Audio(
 );
 tickSound.volume = 0.4;
 
-// ====== RANDOM SEED ======
+// ===== Retina Resize =====
+function resizeCanvas() {
+    const wrapper = document.querySelector(".wheel-wrapper");
+    const rect = wrapper.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+
+    canvas.style.width = rect.width + "px";
+    canvas.style.height = rect.height + "px";
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    size = rect.width;
+    center = size / 2;
+    radius = center - 10;
+
+    drawWheel();
+}
+
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// ===== Random =====
 function seededRandom() {
     const x = Math.sin(seed++) * 10000;
     return x - Math.floor(x);
 }
 
-// ====== ОТРИСОВКА ======
+// ===== Draw =====
 function drawWheel() {
     ctx.clearRect(0, 0, size, size);
-
     if (bars.length === 0) return;
 
     const slice = (2 * Math.PI) / bars.length;
@@ -223,7 +209,7 @@ function drawWheel() {
     });
 }
 
-// ====== ВРАЩЕНИЕ ======
+// ===== Spin =====
 spinBtn.addEventListener("click", () => {
     if (spinning || bars.length <= 1) return;
 
@@ -258,8 +244,8 @@ spinBtn.addEventListener("click", () => {
         );
 
         if (currentTick !== lastTick) {
-            tickSound.currentTime = 0;
-            tickSound.play();
+            if (!tickSound.paused) tickSound.currentTime = 0;
+            tickSound.play().catch(()=>{});
             lastTick = currentTick;
         }
 
@@ -275,7 +261,7 @@ spinBtn.addEventListener("click", () => {
     requestAnimationFrame(animate);
 });
 
-// ====== РЕЗУЛЬТАТ + ВЫБЫВАНИЕ ======
+// ===== Result =====
 function showResult(index) {
 
     const eliminated = bars[index];
@@ -310,13 +296,13 @@ function showResult(index) {
     }
 }
 
-// ====== ФИНАЛЬНОЕ ВРАЩЕНИЕ ======
+// ===== Final Spin =====
 function finalSpin() {
 
     result.textContent = "🔥 ФИНАЛЬНОЕ ВРАЩЕНИЕ АХАХАХЭА!";
     result.classList.add("show");
 
-    const slice = (2 * Math.PI) / bars.length;
+    const slice = (2 * Math.PI);
     const spins = 8;
 
     const targetAngle =
@@ -348,45 +334,76 @@ function finalSpin() {
     requestAnimationFrame(animate);
 }
 
-// ====== ФИНАЛ ======
+// ===== Final Win =====
 function finalWinAnimation() {
-
     result.textContent = `🏆 БЛЯДСКИЙ ПОБЕДИТЕЛЬ ГОВНА: ${bars[0]} 🍾`;
     result.style.fontSize = "34px";
     result.style.textShadow = "0 0 25px gold";
     result.classList.add("show");
-
     confetti();
 }
 
-// ====== CONFETTI ======
+// ===== Optimized Confetti =====
 function confetti() {
-    for (let i = 0; i < 120; i++) {
-        const el = document.createElement("div");
-        el.style.position = "fixed";
-        el.style.left = Math.random() * 100 + "vw";
-        el.style.top = "-10px";
-        el.style.width = "8px";
-        el.style.height = "8px";
-        el.style.background = `hsl(${Math.random() * 360},100%,50%)`;
-        el.style.borderRadius = "50%";
-        el.style.zIndex = 9999;
-        el.style.animation = "fall 3s linear";
 
-        document.body.appendChild(el);
-        setTimeout(() => el.remove(), 3000);
+    const confettiCanvas = document.createElement("canvas");
+    const confettiCtx = confettiCanvas.getContext("2d");
+
+    confettiCanvas.style.position = "fixed";
+    confettiCanvas.style.left = 0;
+    confettiCanvas.style.top = 0;
+    confettiCanvas.style.pointerEvents = "none";
+    confettiCanvas.style.zIndex = 9999;
+
+    document.body.appendChild(confettiCanvas);
+
+    const dpr = window.devicePixelRatio || 1;
+    confettiCanvas.width = window.innerWidth * dpr;
+    confettiCanvas.height = window.innerHeight * dpr;
+    confettiCanvas.style.width = window.innerWidth + "px";
+    confettiCanvas.style.height = window.innerHeight + "px";
+    confettiCtx.scale(dpr, dpr);
+
+    const pieces = [];
+
+    for (let i = 0; i < 60; i++) {
+        pieces.push({
+            x: Math.random() * window.innerWidth,
+            y: -20,
+            size: 6 + Math.random() * 6,
+            speed: 2 + Math.random() * 3,
+            angle: Math.random() * 360,
+            color: `hsl(${Math.random() * 360},100%,50%)`
+        });
     }
+
+    let start = performance.now();
+
+    function animate(time) {
+
+        confettiCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+        pieces.forEach(p => {
+            p.y += p.speed;
+            p.angle += 5;
+
+            confettiCtx.save();
+            confettiCtx.translate(p.x, p.y);
+            confettiCtx.rotate(p.angle * Math.PI / 180);
+            confettiCtx.fillStyle = p.color;
+            confettiCtx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+            confettiCtx.restore();
+        });
+
+        if (time - start < 3000) {
+            requestAnimationFrame(animate);
+        } else {
+            confettiCanvas.remove();
+        }
+    }
+
+    requestAnimationFrame(animate);
 }
-
-const style = document.createElement("style");
-style.innerHTML = `
-@keyframes fall {
-    to {
-        transform: translateY(110vh) rotate(720deg);
-        opacity: 0;
-    }
-}`;
-document.head.appendChild(style);
 
 </script>
 </body>
