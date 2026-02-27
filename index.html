@@ -27,18 +27,15 @@ body {
     box-sizing: border-box;
 }
 
-h1 {
-    margin-bottom: 20px;
-    font-size: 34px;
-}
+h1 { font-size: 28px; }
 
 .wheel-wrapper {
     position: relative;
     width: 460px;
     height: 460px;
-    margin: auto;
     max-width: 90vw;
     max-height: 90vw;
+    margin: auto;
 }
 
 canvas {
@@ -49,62 +46,38 @@ canvas {
 
 .pointer {
     position: absolute;
-    top: -18px;
+    top: -16px;
     left: 50%;
     transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 18px solid transparent;
-    border-right: 18px solid transparent;
-    border-top: 32px solid #ff3d3d;
-    filter: drop-shadow(0 0 6px rgba(255,0,0,0.7));
+    border-left: 16px solid transparent;
+    border-right: 16px solid transparent;
+    border-top: 28px solid #ff3d3d;
 }
 
 button {
     margin-top: 30px;
-    padding: 16px 46px;
-    font-size: 20px;
+    padding: 14px 36px;
+    font-size: 18px;
     font-weight: 800;
     background: linear-gradient(135deg, #ff416c, #ff4b2b);
     border: none;
     border-radius: 50px;
     color: white;
     cursor: pointer;
-    box-shadow: 0 12px 30px rgba(255,75,43,0.45);
-}
-
-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
 }
 
 .result {
-    margin-top: 26px;
-    font-size: 24px;
+    margin-top: 20px;
+    font-size: 20px;
     opacity: 0;
-    transition: 0.4s;
+    transition: 0.3s;
 }
 
-.result.show {
-    opacity: 1;
-}
-
-@media (max-width: 768px) {
-    h1 { font-size: 22px; }
-    .wheel-wrapper { width: 90vw; height: 90vw; }
-    button { padding: 14px 28px; font-size: 16px; }
-    .result { font-size: 18px; }
-    .pointer {
-        top: -14px;
-        border-left: 14px solid transparent;
-        border-right: 14px solid transparent;
-        border-top: 24px solid #ff3d3d;
-    }
-}
+.result.show { opacity: 1; }
 </style>
 </head>
-
 <body>
+
 <div class="app">
     <h1>🍹 Куда идём по пивасику пидарасику?</h1>
 
@@ -114,12 +87,12 @@ button:disabled {
     </div>
 
     <button id="spin">ХУЯРИТЬ</button>
-    <div class="result" id="result"></div>
+    <div id="result" class="result"></div>
 </div>
 
 <script>
 
-// ================= НАСТРОЙКИ =================
+// ===== НАСТРОЙКИ =====
 let bars = [
     "Пивной сад",
     "Чили(нергрони)",
@@ -131,7 +104,6 @@ let bars = [
     "У Игоря на хате",
     "У Вадика на хате"
 ];
-// ============================================
 
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
@@ -144,26 +116,18 @@ let spinning = false;
 let round = 1;
 let lastTick = -1;
 
-let seed = Math.floor(Math.random() * 1e9);
+// 🔥 ограничиваем DPR до 2 (Safari не будет перегружаться)
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
 
-const tickSound = new Audio(
-  "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
-);
-tickSound.volume = 0.4;
-
-// ===== Retina Resize =====
 function resizeCanvas() {
-    const wrapper = document.querySelector(".wheel-wrapper");
-    const rect = wrapper.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.parentElement.getBoundingClientRect();
 
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-
+    canvas.width = rect.width * DPR;
+    canvas.height = rect.height * DPR;
     canvas.style.width = rect.width + "px";
     canvas.style.height = rect.height + "px";
 
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
     size = rect.width;
     center = size / 2;
@@ -175,27 +139,28 @@ function resizeCanvas() {
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
-// ===== Random =====
-function seededRandom() {
-    const x = Math.sin(seed++) * 10000;
-    return x - Math.floor(x);
-}
+// ===== ЗВУК =====
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-// ===== Draw =====
+const tickSound = new Audio(
+  "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
+);
+tickSound.volume = 0.4;
+
+// ===== ОТРИСОВКА =====
 function drawWheel() {
     ctx.clearRect(0, 0, size, size);
-    if (bars.length === 0) return;
 
     const slice = (2 * Math.PI) / bars.length;
 
-    bars.forEach((bar, i) => {
+    for (let i = 0; i < bars.length; i++) {
+
         const angle = rotation + i * slice;
 
         ctx.beginPath();
         ctx.moveTo(center, center);
         ctx.arc(center, center, radius, angle, angle + slice);
-
-        ctx.fillStyle = `hsl(${(i * 360) / bars.length}, 85%, 60%)`;
+        ctx.fillStyle = `hsl(${(i * 360) / bars.length},85%,60%)`;
         ctx.fill();
 
         ctx.save();
@@ -204,12 +169,12 @@ function drawWheel() {
         ctx.textAlign = "right";
         ctx.fillStyle = "#000";
         ctx.font = `bold ${size * 0.035}px Montserrat`;
-        ctx.fillText(bar, radius - 18, 6);
+        ctx.fillText(bars[i], radius - 18, 6);
         ctx.restore();
-    });
+    }
 }
 
-// ===== Spin =====
+// ===== ВРАЩЕНИЕ =====
 spinBtn.addEventListener("click", () => {
     if (spinning || bars.length <= 1) return;
 
@@ -218,7 +183,7 @@ spinBtn.addEventListener("click", () => {
     result.classList.remove("show");
 
     const slice = (2 * Math.PI) / bars.length;
-    const loserIndex = Math.floor(seededRandom() * bars.length);
+    const loserIndex = Math.floor(Math.random() * bars.length);
     const spins = 6;
 
     const targetAngle =
@@ -226,8 +191,7 @@ spinBtn.addEventListener("click", () => {
         (loserIndex * slice + slice / 2) -
         Math.PI / 2;
 
-    const finalRotation =
-        spins * 2 * Math.PI + targetAngle;
+    const finalRotation = spins * 2 * Math.PI + targetAngle;
 
     const start = performance.now();
     const duration = 5000;
@@ -239,12 +203,11 @@ spinBtn.addEventListener("click", () => {
         rotation = ease * finalRotation;
         drawWheel();
 
-        const currentTick = Math.floor(
-            ((rotation % (2 * Math.PI)) + 2 * Math.PI) / slice
-        );
+        const currentTick = Math.floor(rotation / slice);
 
-        if (currentTick !== lastTick) {
-            if (!tickSound.paused) tickSound.currentTime = 0;
+        // 🔥 отключаем тики на мобилке (это главный лаг)
+        if (!isMobile && currentTick !== lastTick) {
+            tickSound.currentTime = 0;
             tickSound.play().catch(()=>{});
             lastTick = currentTick;
         }
@@ -261,148 +224,27 @@ spinBtn.addEventListener("click", () => {
     requestAnimationFrame(animate);
 });
 
-// ===== Result =====
+// ===== РЕЗУЛЬТАТ =====
 function showResult(index) {
 
     const eliminated = bars[index];
 
     result.textContent =
         bars.length > 1
-        ? `❌  ${round}й идет нахуй: ${eliminated}`
+        ? `❌ ${round}й идет нахуй: ${eliminated}`
         : `🏆 ПОБЕДИТЕЛЬ АХУЕТЬ: ${eliminated}`;
 
     result.classList.add("show");
 
     if (bars.length > 1) {
-
         setTimeout(() => {
-
             bars.splice(index, 1);
-
-            if (bars.length === 1) {
-                finalSpin();
-                return;
-            }
-
             round++;
             rotation = 0;
             spinBtn.disabled = false;
             drawWheel();
-
         }, 2000);
-
-    } else {
-        finalWinAnimation();
     }
-}
-
-// ===== Final Spin =====
-function finalSpin() {
-
-    result.textContent = "🔥 ФИНАЛЬНОЕ ВРАЩЕНИЕ АХАХАХЭА!";
-    result.classList.add("show");
-
-    const slice = (2 * Math.PI);
-    const spins = 8;
-
-    const targetAngle =
-        (2 * Math.PI) -
-        (slice / 2) -
-        Math.PI / 2;
-
-    const finalRotation =
-        spins * 2 * Math.PI + targetAngle;
-
-    const start = performance.now();
-    const duration = 4000;
-
-    function animate(time) {
-
-        const progress = Math.min((time - start) / duration, 1);
-        const ease = 1 - Math.pow(1 - progress, 4);
-
-        rotation = ease * finalRotation;
-        drawWheel();
-
-        if (progress < 1) {
-            requestAnimationFrame(animate);
-        } else {
-            finalWinAnimation();
-        }
-    }
-
-    requestAnimationFrame(animate);
-}
-
-// ===== Final Win =====
-function finalWinAnimation() {
-    result.textContent = `🏆 БЛЯДСКИЙ ПОБЕДИТЕЛЬ ГОВНА: ${bars[0]} 🍾`;
-    result.style.fontSize = "34px";
-    result.style.textShadow = "0 0 25px gold";
-    result.classList.add("show");
-    confetti();
-}
-
-// ===== Optimized Confetti =====
-function confetti() {
-
-    const confettiCanvas = document.createElement("canvas");
-    const confettiCtx = confettiCanvas.getContext("2d");
-
-    confettiCanvas.style.position = "fixed";
-    confettiCanvas.style.left = 0;
-    confettiCanvas.style.top = 0;
-    confettiCanvas.style.pointerEvents = "none";
-    confettiCanvas.style.zIndex = 9999;
-
-    document.body.appendChild(confettiCanvas);
-
-    const dpr = window.devicePixelRatio || 1;
-    confettiCanvas.width = window.innerWidth * dpr;
-    confettiCanvas.height = window.innerHeight * dpr;
-    confettiCanvas.style.width = window.innerWidth + "px";
-    confettiCanvas.style.height = window.innerHeight + "px";
-    confettiCtx.scale(dpr, dpr);
-
-    const pieces = [];
-
-    for (let i = 0; i < 60; i++) {
-        pieces.push({
-            x: Math.random() * window.innerWidth,
-            y: -20,
-            size: 6 + Math.random() * 6,
-            speed: 2 + Math.random() * 3,
-            angle: Math.random() * 360,
-            color: `hsl(${Math.random() * 360},100%,50%)`
-        });
-    }
-
-    let start = performance.now();
-
-    function animate(time) {
-
-        confettiCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-
-        pieces.forEach(p => {
-            p.y += p.speed;
-            p.angle += 5;
-
-            confettiCtx.save();
-            confettiCtx.translate(p.x, p.y);
-            confettiCtx.rotate(p.angle * Math.PI / 180);
-            confettiCtx.fillStyle = p.color;
-            confettiCtx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
-            confettiCtx.restore();
-        });
-
-        if (time - start < 3000) {
-            requestAnimationFrame(animate);
-        } else {
-            confettiCanvas.remove();
-        }
-    }
-
-    requestAnimationFrame(animate);
 }
 
 </script>
