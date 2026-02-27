@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Куда идём по пивасику пидарасику?</title>
+<title>Колесо выбора</title>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&display=swap');
@@ -29,6 +29,7 @@ padding:20px;
 h1{
 font-size:26px;
 margin-bottom:20px;
+transition:0.3s;
 }
 
 .mode-btn{
@@ -39,7 +40,7 @@ font-weight:800;
 cursor:pointer;
 background:linear-gradient(135deg,#00c6ff,#0072ff);
 color:white;
-margin-bottom:25px; /* увеличили отступ */
+margin-bottom:25px;
 }
 
 .wheel-wrapper{
@@ -48,12 +49,12 @@ width:90vw;
 max-width:460px;
 height:90vw;
 max-height:460px;
-margin:20px auto 10px auto; /* добавили верхний отступ */
+margin:20px auto 10px auto;
 }
 
 .pointer{
 position:absolute;
-top:-8px; /* было -18px */
+top:-8px;
 left:50%;
 transform:translateX(-50%);
 width:0;
@@ -89,7 +90,6 @@ opacity:0;
 transition:0.3s;
 min-height:24px;
 }
-
 .result.show{opacity:1;}
 
 .settings-btn{
@@ -136,6 +136,12 @@ margin-bottom:15px;
 text-align:center;
 }
 
+.section-title{
+font-size:14px;
+margin-bottom:6px;
+opacity:0.7;
+}
+
 .input-row{
 display:flex;
 gap:10px;
@@ -160,8 +166,9 @@ font-weight:600;
 }
 
 .list{
-max-height:200px;
+max-height:150px;
 overflow-y:auto;
+margin-bottom:10px;
 }
 
 .list-item{
@@ -186,7 +193,7 @@ font-size:12px;
 }
 
 .close-btn{
-margin-top:15px;
+margin-top:10px;
 width:100%;
 padding:10px;
 border:none;
@@ -202,7 +209,7 @@ cursor:pointer;
 
 <div class="app">
 
-<h1>🍹 Куда идём по пивасику пидарасику?</h1>
+<h1 id="wheelTitle">🍹 Куда идём по пивасику пидарасику?</h1>
 
 <button class="mode-btn" id="modeToggle">
 Режим: На вылет
@@ -226,6 +233,13 @@ cursor:pointer;
 <div class="modal-content">
 <h2>Настройка колеса</h2>
 
+<div class="section-title">Название колеса</div>
+<div class="input-row">
+<input id="titleInput" placeholder="Введите название"/>
+<button onclick="saveTitle()">Сохранить</button>
+</div>
+
+<div class="section-title">Варианты</div>
 <div class="input-row">
 <input id="newItem" placeholder="Новый вариант"/>
 <button onclick="addItem()">Добавить</button>
@@ -240,12 +254,21 @@ cursor:pointer;
 
 <script>
 
-let bars=[
+// ===== ЗАГРУЗКА ИЗ localStorage =====
+
+let bars = JSON.parse(localStorage.getItem("wheel_items")) || [
 "Пивной сад",
 "Чили",
 "Корвин",
 "Солтихорс"
 ];
+
+let savedTitle = localStorage.getItem("wheel_title") || 
+"🍹 Куда идём по пивасику пидарасику?";
+
+document.getElementById("wheelTitle").textContent = savedTitle;
+
+// ===== ОСНОВА =====
 
 let mode="elimination";
 
@@ -351,6 +374,7 @@ result.classList.add("show");
 
 setTimeout(()=>{
 bars.splice(index,1);
+saveItems();
 round++;
 rotation=0;
 drawWheel();
@@ -372,15 +396,24 @@ modeToggle.textContent=mode==="elimination"
 
 spinBtn.onclick=spinWheel;
 
-/* ===== POPUP ===== */
+// ===== НАСТРОЙКИ =====
 
 function openModal(){
 modal.classList.add("active");
 renderList();
+document.getElementById("titleInput").value =
+document.getElementById("wheelTitle").textContent;
 }
 
 function closeModal(){
 modal.classList.remove("active");
+}
+
+function saveTitle(){
+const value=document.getElementById("titleInput").value.trim();
+if(!value)return;
+document.getElementById("wheelTitle").textContent=value;
+localStorage.setItem("wheel_title",value);
 }
 
 function addItem(){
@@ -389,12 +422,14 @@ const value=input.value.trim();
 if(!value)return;
 bars.push(value);
 input.value="";
+saveItems();
 renderList();
 drawWheel();
 }
 
 function removeItem(i){
 bars.splice(i,1);
+saveItems();
 renderList();
 drawWheel();
 }
@@ -409,6 +444,10 @@ list.innerHTML+=`
 <button onclick="removeItem(${i})">✖</button>
 </div>`;
 });
+}
+
+function saveItems(){
+localStorage.setItem("wheel_items",JSON.stringify(bars));
 }
 
 </script>
