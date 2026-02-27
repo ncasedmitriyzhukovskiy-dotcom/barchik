@@ -1,249 +1,417 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Куда идём по пивасику пидарасику?</title>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&display=swap');
 
-body {
-    margin: 0;
-    min-height: 100vh;
-    background: radial-gradient(circle at top, #1b1f3b, #090b17);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Montserrat', sans-serif;
-    color: white;
-    overflow-x: hidden;
+body{
+margin:0;
+min-height:100vh;
+background:radial-gradient(circle at top,#1b1f3b,#090b17);
+display:flex;
+align-items:center;
+justify-content:center;
+font-family:'Montserrat',sans-serif;
+color:white;
 }
 
-.app {
-    text-align: center;
-    width: 100%;
-    padding: 20px;
-    box-sizing: border-box;
+.app{
+text-align:center;
+width:100%;
+max-width:520px;
+padding:20px;
 }
 
-h1 { font-size: 28px; }
-
-.wheel-wrapper {
-    position: relative;
-    width: 460px;
-    height: 460px;
-    max-width: 90vw;
-    max-height: 90vw;
-    margin: auto;
+h1{
+font-size:26px;
+margin-bottom:20px;
 }
 
-canvas {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
+.mode-btn{
+padding:10px 22px;
+border:none;
+border-radius:40px;
+font-weight:800;
+cursor:pointer;
+background:linear-gradient(135deg,#00c6ff,#0072ff);
+color:white;
+margin-bottom:25px; /* увеличили отступ */
 }
 
-.pointer {
-    position: absolute;
-    top: -16px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-left: 16px solid transparent;
-    border-right: 16px solid transparent;
-    border-top: 28px solid #ff3d3d;
+.wheel-wrapper{
+position:relative;
+width:90vw;
+max-width:460px;
+height:90vw;
+max-height:460px;
+margin:20px auto 10px auto; /* добавили верхний отступ */
 }
 
-button {
-    margin-top: 30px;
-    padding: 14px 36px;
-    font-size: 18px;
-    font-weight: 800;
-    background: linear-gradient(135deg, #ff416c, #ff4b2b);
-    border: none;
-    border-radius: 50px;
-    color: white;
-    cursor: pointer;
+.pointer{
+position:absolute;
+top:-8px; /* было -18px */
+left:50%;
+transform:translateX(-50%);
+width:0;
+height:0;
+border-left:14px solid transparent;
+border-right:14px solid transparent;
+border-top:24px solid #ff3d3d;
+z-index:5;
 }
 
-.result {
-    margin-top: 20px;
-    font-size: 20px;
-    opacity: 0;
-    transition: 0.3s;
+canvas{
+width:100%;
+height:100%;
+border-radius:50%;
 }
 
-.result.show { opacity: 1; }
+.spin-btn{
+margin-top:15px;
+padding:14px 30px;
+font-size:16px;
+font-weight:800;
+border:none;
+border-radius:40px;
+cursor:pointer;
+background:linear-gradient(135deg,#ff416c,#ff4b2b);
+color:white;
+}
+
+.result{
+margin-top:18px;
+font-size:18px;
+opacity:0;
+transition:0.3s;
+min-height:24px;
+}
+
+.result.show{opacity:1;}
+
+.settings-btn{
+margin-top:15px;
+padding:10px 20px;
+border:none;
+border-radius:30px;
+background:#2b2f55;
+color:#fff;
+cursor:pointer;
+}
+
+/* ===== POPUP ===== */
+
+.modal{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.6);
+display:flex;
+align-items:center;
+justify-content:center;
+opacity:0;
+pointer-events:none;
+transition:0.3s;
+}
+
+.modal.active{
+opacity:1;
+pointer-events:auto;
+}
+
+.modal-content{
+background:#11142a;
+width:90%;
+max-width:400px;
+padding:20px;
+border-radius:16px;
+text-align:left;
+}
+
+.modal-content h2{
+margin-top:0;
+margin-bottom:15px;
+text-align:center;
+}
+
+.input-row{
+display:flex;
+gap:10px;
+margin-bottom:15px;
+}
+
+.input-row input{
+flex:1;
+padding:8px;
+border-radius:8px;
+border:none;
+}
+
+.input-row button{
+padding:8px 14px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+background:#ff416c;
+color:white;
+font-weight:600;
+}
+
+.list{
+max-height:200px;
+overflow-y:auto;
+}
+
+.list-item{
+display:flex;
+justify-content:space-between;
+align-items:center;
+background:#1c2040;
+padding:8px 12px;
+border-radius:8px;
+margin-bottom:6px;
+font-size:14px;
+}
+
+.list-item button{
+background:#ff4b2b;
+border:none;
+border-radius:6px;
+color:white;
+cursor:pointer;
+padding:4px 8px;
+font-size:12px;
+}
+
+.close-btn{
+margin-top:15px;
+width:100%;
+padding:10px;
+border:none;
+border-radius:10px;
+background:#2b2f55;
+color:white;
+cursor:pointer;
+}
+
 </style>
 </head>
 <body>
 
 <div class="app">
-    <h1>🍹 Куда идём по пивасику пидарасику?</h1>
 
-    <div class="wheel-wrapper">
-        <div class="pointer"></div>
-        <canvas id="wheel"></canvas>
-    </div>
+<h1>🍹 Куда идём по пивасику пидарасику?</h1>
 
-    <button id="spin">ХУЯРИТЬ</button>
-    <div id="result" class="result"></div>
+<button class="mode-btn" id="modeToggle">
+Режим: На вылет
+</button>
+
+<div class="wheel-wrapper">
+<div class="pointer"></div>
+<canvas id="wheel"></canvas>
+</div>
+
+<button class="spin-btn" id="spin">ХУЯРИТЬ</button>
+
+<div class="result" id="result"></div>
+
+<button class="settings-btn" onclick="openModal()">⚙ Настроить колесо</button>
+
+</div>
+
+<!-- POPUP -->
+<div class="modal" id="modal">
+<div class="modal-content">
+<h2>Настройка колеса</h2>
+
+<div class="input-row">
+<input id="newItem" placeholder="Новый вариант"/>
+<button onclick="addItem()">Добавить</button>
+</div>
+
+<div class="list" id="list"></div>
+
+<button class="close-btn" onclick="closeModal()">Закрыть</button>
+
+</div>
 </div>
 
 <script>
 
-// ===== НАСТРОЙКИ =====
-let bars = [
-    "Пивной сад",
-    "Чили(нергрони)",
-    "Корвин",
-    "Солтихорс",
-    "Качка",
-    "Гамбринус"
+let bars=[
+"Пивной сад",
+"Чили",
+"Корвин",
+"Солтихорс"
 ];
 
-const canvas = document.getElementById("wheel");
-const ctx = canvas.getContext("2d");
-const spinBtn = document.getElementById("spin");
-const result = document.getElementById("result");
+let mode="elimination";
 
-let size, center, radius;
-let rotation = 0;
-let spinning = false;
-let round = 1;
-let lastTick = -1;
+const canvas=document.getElementById("wheel");
+const ctx=canvas.getContext("2d");
+const spinBtn=document.getElementById("spin");
+const result=document.getElementById("result");
+const modeToggle=document.getElementById("modeToggle");
+const modal=document.getElementById("modal");
 
-// 🔥 ограничиваем DPR до 2 (Safari не будет перегружаться)
-const DPR = Math.min(window.devicePixelRatio || 1, 2);
+let size,center,radius;
+let rotation=0;
+let spinning=false;
+let round=1;
 
-function resizeCanvas() {
-    const rect = canvas.parentElement.getBoundingClientRect();
+const DPR=Math.min(window.devicePixelRatio||1,2);
 
-    canvas.width = rect.width * DPR;
-    canvas.height = rect.height * DPR;
-    canvas.style.width = rect.width + "px";
-    canvas.style.height = rect.height + "px";
-
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-
-    size = rect.width;
-    center = size / 2;
-    radius = center - 10;
-
-    drawWheel();
+function resizeCanvas(){
+const rect=canvas.parentElement.getBoundingClientRect();
+canvas.width=rect.width*DPR;
+canvas.height=rect.height*DPR;
+canvas.style.width=rect.width+"px";
+canvas.style.height=rect.height+"px";
+ctx.setTransform(DPR,0,0,DPR,0,0);
+size=rect.width;
+center=size/2;
+radius=center-10;
+drawWheel();
 }
-
-window.addEventListener("resize", resizeCanvas);
+window.addEventListener("resize",resizeCanvas);
 resizeCanvas();
 
-// ===== ЗВУК =====
-const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+function drawWheel(){
+ctx.clearRect(0,0,size,size);
+if(!bars.length)return;
 
-const tickSound = new Audio(
-  "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
-);
-tickSound.volume = 0.4;
+const slice=(2*Math.PI)/bars.length;
 
-// ===== ОТРИСОВКА =====
-function drawWheel() {
-    ctx.clearRect(0, 0, size, size);
+bars.forEach((bar,i)=>{
+const angle=rotation+i*slice;
 
-    const slice = (2 * Math.PI) / bars.length;
+ctx.beginPath();
+ctx.moveTo(center,center);
+ctx.arc(center,center,radius,angle,angle+slice);
+ctx.fillStyle=`hsl(${(i*360)/bars.length},85%,60%)`;
+ctx.fill();
 
-    for (let i = 0; i < bars.length; i++) {
-
-        const angle = rotation + i * slice;
-
-        ctx.beginPath();
-        ctx.moveTo(center, center);
-        ctx.arc(center, center, radius, angle, angle + slice);
-        ctx.fillStyle = `hsl(${(i * 360) / bars.length},85%,60%)`;
-        ctx.fill();
-
-        ctx.save();
-        ctx.translate(center, center);
-        ctx.rotate(angle + slice / 2);
-        ctx.textAlign = "right";
-        ctx.fillStyle = "#000";
-        ctx.font = `bold ${size * 0.035}px Montserrat`;
-        ctx.fillText(bars[i], radius - 18, 6);
-        ctx.restore();
-    }
+ctx.save();
+ctx.translate(center,center);
+ctx.rotate(angle+slice/2);
+ctx.textAlign="right";
+ctx.fillStyle="#000";
+ctx.font=`bold ${size*0.04}px Montserrat`;
+ctx.fillText(bar,radius-18,6);
+ctx.restore();
+});
 }
 
-// ===== ВРАЩЕНИЕ =====
-spinBtn.addEventListener("click", () => {
-    if (spinning || bars.length <= 1) return;
+function spinWheel(){
+if(spinning||bars.length<1)return;
+spinning=true;
+spinBtn.disabled=true;
+result.classList.remove("show");
 
-    spinning = true;
-    spinBtn.disabled = true;
-    result.classList.remove("show");
+const slice=(2*Math.PI)/bars.length;
+const index=Math.floor(Math.random()*bars.length);
+const spins=6;
 
-    const slice = (2 * Math.PI) / bars.length;
-    const loserIndex = Math.floor(Math.random() * bars.length);
-    const spins = 6;
+const targetAngle=(2*Math.PI)-(index*slice+slice/2)-Math.PI/2;
+const finalRotation=spins*2*Math.PI+targetAngle;
 
-    const targetAngle =
-        (2 * Math.PI) -
-        (loserIndex * slice + slice / 2) -
-        Math.PI / 2;
+const start=performance.now();
+const duration=4000;
 
-    const finalRotation = spins * 2 * Math.PI + targetAngle;
+function animate(time){
+const progress=Math.min((time-start)/duration,1);
+const ease=1-Math.pow(1-progress,4);
+rotation=ease*finalRotation;
+drawWheel();
 
-    const start = performance.now();
-    const duration = 5000;
+if(progress<1){
+requestAnimationFrame(animate);
+}else{
+spinning=false;
+handleResult(index);
+}
+}
+requestAnimationFrame(animate);
+}
 
-    function animate(time) {
-        const progress = Math.min((time - start) / duration, 1);
-        const ease = 1 - Math.pow(1 - progress, 5);
+function handleResult(index){
 
-        rotation = ease * finalRotation;
-        drawWheel();
+if(mode==="single"){
+result.textContent=`🏆 Победитель: ${bars[index]}`;
+result.classList.add("show");
+spinBtn.disabled=false;
+return;
+}
 
-        const currentTick = Math.floor(rotation / slice);
+const eliminated=bars[index];
+result.textContent=`❌ ${round} вылетает: ${eliminated}`;
+result.classList.add("show");
 
-        // 🔥 отключаем тики на мобилке (это главный лаг)
-        if (!isMobile && currentTick !== lastTick) {
-            tickSound.currentTime = 0;
-            tickSound.play().catch(()=>{});
-            lastTick = currentTick;
-        }
+setTimeout(()=>{
+bars.splice(index,1);
+round++;
+rotation=0;
+drawWheel();
 
-        if (progress < 1) {
-            requestAnimationFrame(animate);
-        } else {
-            spinning = false;
-            lastTick = -1;
-            showResult(loserIndex);
-        }
-    }
+if(bars.length===1){
+result.textContent=`🏆 ПОБЕДИТЕЛЬ: ${bars[0]}`;
+}else{
+spinBtn.disabled=false;
+}
+},1500);
+}
 
-    requestAnimationFrame(animate);
+modeToggle.onclick=()=>{
+mode=mode==="elimination"?"single":"elimination";
+modeToggle.textContent=mode==="elimination"
+?"Режим: На вылет"
+:"Режим: Один прокрут";
+};
+
+spinBtn.onclick=spinWheel;
+
+/* ===== POPUP ===== */
+
+function openModal(){
+modal.classList.add("active");
+renderList();
+}
+
+function closeModal(){
+modal.classList.remove("active");
+}
+
+function addItem(){
+const input=document.getElementById("newItem");
+const value=input.value.trim();
+if(!value)return;
+bars.push(value);
+input.value="";
+renderList();
+drawWheel();
+}
+
+function removeItem(i){
+bars.splice(i,1);
+renderList();
+drawWheel();
+}
+
+function renderList(){
+const list=document.getElementById("list");
+list.innerHTML="";
+bars.forEach((b,i)=>{
+list.innerHTML+=`
+<div class="list-item">
+<span>${b}</span>
+<button onclick="removeItem(${i})">✖</button>
+</div>`;
 });
-
-// ===== РЕЗУЛЬТАТ =====
-function showResult(index) {
-
-    const eliminated = bars[index];
-
-    result.textContent =
-        bars.length > 1
-        ? `❌ ${round}й идет нахуй: ${eliminated}`
-        : `🏆 ПОБЕДИТЕЛЬ АХУЕТЬ: ${eliminated}`;
-
-    result.classList.add("show");
-
-    if (bars.length > 1) {
-        setTimeout(() => {
-            bars.splice(index, 1);
-            round++;
-            rotation = 0;
-            spinBtn.disabled = false;
-            drawWheel();
-        }, 2000);
-    }
 }
 
 </script>
+
 </body>
 </html>
